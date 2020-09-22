@@ -1,0 +1,6 @@
+requirements:
+  default:
+    cpu: 3600m
+    memory: 5Gi
+    pv: 3Gi
+    disk: 0

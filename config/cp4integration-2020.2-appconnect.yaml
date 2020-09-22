@@ -1,0 +1,6 @@
+requirements:
+  default:
+    cpu: 1
+    memory: 4Gi
+    pv: 2300Mi
+    disk: 1Gi

@@ -1,0 +1,4 @@
+requirements:
+  default:
+    cpu: 1325m
+    memory: 2390Mi

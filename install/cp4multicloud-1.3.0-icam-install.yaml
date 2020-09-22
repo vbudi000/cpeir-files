@@ -1,0 +1,59 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: cp4multicloud-1.3.0-installer
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: cpeir
+      imagePullSecrets:
+        - name: icr-io
+      securityContext: {}
+      initContainers:
+        - name: build-config
+          image: busybox:1.28
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: file
+              mountPath: /file
+          command:
+            - /bin/sh
+            - '-c'
+            - >-
+              mkdir -p /config/misc/storage_class &&
+              cp /file/config.yaml /config/config.yaml &&
+              cp /file/hosts /config/hosts &&
+              echo "done"
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: installer
+          args:
+            - install-with-openshift
+          env:
+            - name: LICENSE
+              value: accept
+            - name: ANSIBLE_LOCAL_TEMP
+              value: /tmp
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /installer/cluster
+            - name: cloudctl
+              mountPath: /.cloudctl
+          terminationMessagePolicy: File
+          image: cp.icr.io/cp/icp-foundation/mcm-inception:3.2.5
+      serviceAccount: cpeir
+      volumes:
+        - name: cloudctl
+          emptyDir: {}
+        - name: config
+          emptyDir: {}
+        - name: file
+          configMap:
+            name: cp4multicloud-1.3.0-configmap

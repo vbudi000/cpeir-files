@@ -1,0 +1,29 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: cpeir-configmap
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: cpeir
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: configmap-builder
+          command:
+            - /bin/bash
+            - '-c'
+            - >-
+              git clone https://github.com/vbudi000/cpeir && cd cpeir && git checkout v2 &&
+              oc create configmap cpeir-config --from-file=files/config  &&
+              oc create configmap cpeir-check --from-file=files/check  &&
+              oc create configmap cpeir-install --from-file=files/install  &&
+              echo "done"
+          imagePullPolicy: Always
+          terminationMessagePolicy: File
+          image: ibmcloudacademy/cpeir-runtime:1.0
+      serviceAccount: cpeir

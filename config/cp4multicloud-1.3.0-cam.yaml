@@ -1,0 +1,17 @@
+requirements:
+  development:
+    cpu: 12
+    memory: 20Gi
+    pv: 65Gi
+  minimal:
+    cpu: 12
+    memory: 30Gi
+    pv: 65Gi
+  standard:
+    cpu: 15
+    memory: 48Gi
+    pv: 65Gi
+  enterprise:
+    cpu: 18
+    memory: 60Gi
+    pv: 65Gi

@@ -1,0 +1,5 @@
+requirements:
+  default:
+    cpu: 2
+    memory: 3584Mi
+    pv: 8Gi

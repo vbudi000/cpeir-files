@@ -1,0 +1,24 @@
+requirements:
+  default:
+    cpu: 8000m
+    memory: 16Gi
+  development:
+    cpu: 8000m
+    memory: 16Gi
+    pv: 20Gi
+    disk: 100Gi
+  minimal:
+    cpu: 16
+    memory: 32Gi
+    pv: 20Gi
+    disk: 100Gi
+  standard:
+    cpu: 32
+    memory: 60Gi
+    pv: 20Gi
+    disk: 300Gi
+  enterprise:
+    cpu: 54
+    memory: 97Gi
+    pv: 60Gi
+    disk: 700Gi

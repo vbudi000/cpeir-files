@@ -21,9 +21,14 @@ CP4MCM_NAMESPACE="cp4m"
 # Parameters for ROKS
 # Currently only used for CAM
 ###########################
-ROKS="true"
-ROKSREGION="us-south"
-ROKSZONE="dal13"
+ibmroks=$(oc cluster-info | grep "cloud.ibm.com" | wc -l)
+if [ ibmroks -gt 0 ]; then
+  ROKS="true"
+  ROKSREGION="us-south"
+  ROKSZONE="dal13"
+else
+  ROKS="false"
+fi
 
 ###########################
 # CP4MCM Parameters
@@ -38,9 +43,15 @@ ROKSZONE="dal13"
 # CP4MCM_FILE_STORAGECLASS="ocs-storagecluster-cephfs"
 # CP4MCM_FILE_GID_STORAGECLASS="ocs-storagecluster-cephfs"
 
-CP4MCM_BLOCK_STORAGECLASS="ibmc-block-gold"
-CP4MCM_FILE_STORAGECLASS="ibmc-file-gold"
-CP4MCM_FILE_GID_STORAGECLASS="ibmc-file-gold-gid"
+if [ ROKS == "true" ]; then
+  CP4MCM_BLOCK_STORAGECLASS="ibmc-block-gold"
+  CP4MCM_FILE_STORAGECLASS="ibmc-file-gold"
+  CP4MCM_FILE_GID_STORAGECLASS="ibmc-file-gold-gid"
+else
+  CP4MCM_BLOCK_STORAGECLASS="ocs-storagecluster-ceph-rbd"
+  CP4MCM_FILE_STORAGECLASS="ocs-storagecluster-cephfs"
+  CP4MCM_FILE_GID_STORAGECLASS="ocs-storagecluster-cephfs"
+fi
 
 # Additional packages can be found here:
 ANSIBLE_SETUP_PACKAGE="ansible-tower-openshift-setup-3.7.2-1.tar.gz"

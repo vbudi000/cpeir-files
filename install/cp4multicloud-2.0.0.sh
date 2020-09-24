@@ -56,7 +56,7 @@ export ROKS ROKSREGION ROKSZONE
 cd /install
 
 bash /script/1-common-services.sh
-bash /script/cp4m/cp4mcm-core.sh
+bash /script/cp4m/2-cp4mcm-core.sh
 # Create the cp4mcm Namespace
 
 # loop to check installation

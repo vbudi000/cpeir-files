@@ -21,43 +21,26 @@ CP4MCM_NAMESPACE="cp4m"
 # Parameters for ROKS
 # Currently only used for CAM
 ###########################
-ibmroks=$(oc cluster-info | grep "cloud.ibm.com" | wc -l)
-if [ ibmroks -gt 0 ]; then
-  ROKS="true"
-  ROKSREGION="us-south"
-  ROKSZONE="dal13"
-else
+ibmroks=$(oc cluster-info | grep "cloud.ibm.com")
+storclass=$(oc get storageclass | grep -v NAME | grep (default) | cut -f1 )
+
+if [ -z ibmroks ]; then
   ROKS="false"
-fi
-
-###########################
-# CP4MCM Parameters
-###########################
-# ROKS defaults
-# CP4MCM_BLOCK_STORAGECLASS="ibmc-block-gold"
-# CP4MCM_FILE_STORAGECLASS="ibmc-file-gold"
-# CP4MCM_FILE_GID_STORAGECLASS="ibmc-file-gold-gid"
-#
-# OpenShift - OCS Defaults
-# CP4MCM_BLOCK_STORAGECLASS="ocs-storagecluster-ceph-rbd"
-# CP4MCM_FILE_STORAGECLASS="ocs-storagecluster-cephfs"
-# CP4MCM_FILE_GID_STORAGECLASS="ocs-storagecluster-cephfs"
-
-if [ ROKS == "true" ]; then
-  CP4MCM_BLOCK_STORAGECLASS="ibmc-block-gold"
-  CP4MCM_FILE_STORAGECLASS="ibmc-file-gold"
-  CP4MCM_FILE_GID_STORAGECLASS="ibmc-file-gold-gid"
+  ROKSREGION=""
+  ROKSZONE=""
+  # check storage class
+  CP4MCM_BLOCK_STORAGECLASS="${storclass}:-ocs-storagecluster-ceph-rbd"
+  CP4MCM_FILE_STORAGECLASS="${storclass}:-ocs-storagecluster-cephfs"
+  CP4MCM_FILE_GID_STORAGECLASS="${storclass}:-ocs-storagecluster-cephfs"
 else
-  CP4MCM_BLOCK_STORAGECLASS="ocs-storagecluster-ceph-rbd"
-  CP4MCM_FILE_STORAGECLASS="ocs-storagecluster-cephfs"
-  CP4MCM_FILE_GID_STORAGECLASS="ocs-storagecluster-cephfs"
+  ROKS="true"
+  ROKSREGION=$(oc get node -o yaml | grep region | cut -d: -f2 | head -1 | tr -d '[:space:]')
+  ROKSZONE=""
+  # check storage class
+  CP4MCM_BLOCK_STORAGECLASS="${storclass}:-ibmc-block-gold"
+  CP4MCM_FILE_STORAGECLASS="${storclass}:-ibmc-file-gold"
+  CP4MCM_FILE_GID_STORAGECLASS="${storclass}:-ibmc-file-gold-gid"
 fi
-
-# Additional packages can be found here:
-ANSIBLE_SETUP_PACKAGE="ansible-tower-openshift-setup-3.7.2-1.tar.gz"
-ANSIBLE_NAMESPACE="ansible-tower"
-ANSIBLE_PASSWORD="Passw0rd"
-
 
 running=$(oc get job ${name}-installer -n cpeir --no-headers 2>/dev/null | wc -l)
 

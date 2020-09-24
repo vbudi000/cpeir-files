@@ -22,7 +22,7 @@ CP4MCM_NAMESPACE="cp4m"
 # Currently only used for CAM
 ###########################
 ibmroks=$(oc cluster-info | grep "cloud.ibm.com")
-storclass=$(oc get storageclass | grep -v NAME | grep (default) | cut -f1 )
+storclass=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
 
 if [ -z ibmroks ]; then
   ROKS="false"
@@ -50,7 +50,7 @@ if [ $running -gt 0 ]; then
 fi
 
 export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_SECRET DOCKER_EMAIL
-export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS 
+export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS
 export ROKS ROKSREGION ROKSZONE
 
 cd /install

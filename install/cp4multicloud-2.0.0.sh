@@ -49,6 +49,12 @@ if [ $running -gt 0 ]; then
   exit 0
 fi
 
+export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_SECRET DOCKER_EMAIL
+export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS 
+export ROKS ROKSREGION ROKSZONE
+
+cd /install
+
 bash /script/1-common-services.sh
 bash /script/cp4m/cp4mcm-core.sh
 # Create the cp4mcm Namespace

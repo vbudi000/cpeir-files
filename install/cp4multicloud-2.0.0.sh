@@ -3,10 +3,12 @@
 fn=$(basename $0)
 name="${fn%.*}"
 
-entitlement=$1
+objid=$1
+
+entitlement=$(oc get secret entitlement -o custom-columns=ent:data.entitlementKey --no-headers | base64 -d)
 # Installing
 if [ -z $entitlement ]; then
-  echo {}
+  echo { "error": "entitlement key not found" }
   exit 9
 fi
 
@@ -21,26 +23,29 @@ CP4MCM_NAMESPACE="cp4m"
 # Parameters for ROKS
 # Currently only used for CAM
 ###########################
-ibmroks=$(oc cluster-info | grep "cloud.ibm.com")
-storclass=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
+ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
+storclass=$(oc get cpeir cp4multicloud -o custom-columns=sc:spec.storageClass --no-headers)
+defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
 
-if [ -z ibmroks ]; then
+if [ $(oc get sc ${storclass} --no-headers 2>/dev/null | wc -l) -le 0 ]; then
+  echo { "error": "Storage Class ${storclass} is invalid" }
+  exit 9
+fi
+
+if [ -z $ibmroks ]; then
   ROKS="false"
   ROKSREGION=""
   ROKSZONE=""
   # check storage class
-  CP4MCM_BLOCK_STORAGECLASS="${storclass}:-ocs-storagecluster-ceph-rbd"
-  CP4MCM_FILE_STORAGECLASS="${storclass}:-ocs-storagecluster-cephfs"
-  CP4MCM_FILE_GID_STORAGECLASS="${storclass}:-ocs-storagecluster-cephfs"
 else
   ROKS="true"
   ROKSREGION=$(oc get node -o yaml | grep region | cut -d: -f2 | head -1 | tr -d '[:space:]')
   ROKSZONE=""
-  # check storage class
-  CP4MCM_BLOCK_STORAGECLASS="${storclass}:-ibmc-block-gold"
-  CP4MCM_FILE_STORAGECLASS="${storclass}:-ibmc-file-gold"
-  CP4MCM_FILE_GID_STORAGECLASS="${storclass}:-ibmc-file-gold-gid"
 fi
+
+CP4MCM_BLOCK_STORAGECLASS=${storclass}
+CP4MCM_FILE_STORAGECLASS=${storclass}
+CP4MCM_FILE_GID_STORAGECLASS=${storclass}
 
 running=$(oc get job ${name}-installer -n cpeir --no-headers 2>/dev/null | wc -l)
 

@@ -58,19 +58,40 @@ export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_SECRET DOCKER_E
 export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS
 export ROKS ROKSREGION ROKSZONE
 
-cd /install
+oc create -f - <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${name}-installer
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${name}-installer
+        env:
+        - name: ENTITLED_REGISTRY_KEY
+          value: ${ENTITLED_REGISTRY_KEY}
+        - name: ENTITLED_REGISTRY
+          value: ${ENTITLED_REGISTRY}
+        - name: ENTITLED_REGISTRY_SECRET
+          value: ${ENTITLED_REGISTRY_SECRET}
+        - name: CP4MCM_NAMESPACE
+          value: ${CP4MCM_NAMESPACE}
+        - name: CP4MCM_BLOCK_STORAGECLASS
+          value: ${CP4MCM_BLOCK_STORAGECLASS}
+        - name: CP4MCM_FILE_STORAGECLASS
+          value: ${CP4MCM_FILE_STORAGECLASS}
+        - name: CP4MCM_FILE_GID_STORAGECLASS
+          value: ${CP4MCM_FILE_GID_STORAGECLASS}
+        - name: ROKS
+          value: ${ROKS}
+        - name: ROKSREGION
+          value: ${ROKSREGION}
+        - name: ROKSZONE
+          value: ${ROKSZONE}
+        image: vbudi/cpeir-runtime:v0.03
+        command: ["bash",  "installjob.sh", ${name}]
+      restartPolicy: Never
+EOF
 
-bash /script/1-common-services.sh
-bash /script/cp4m/2-cp4mcm-core.sh
-# Create the cp4mcm Namespace
-
-# loop to check installation
-# Install features
-
-/check/$(basename $0)
-
-## cleanup
-
-#oc delete configmap cp4multicluster-1.3.0-configmap
-#oc delete secret icr-io
 exit

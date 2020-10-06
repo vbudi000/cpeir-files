@@ -89,7 +89,9 @@ EOF
 
 installPlan=$(oc get subscription -n openshift-operators ibm-management-orchestrator -o custom-columns=plan:status.installPlanRef.name --no-headers)
 
-planObjects=$(oc get installplan -n openshift-operators install-z5vzt -o yaml | grep -v "\"" | grep "  status:" | wc -l)
+sleep 10
+
+planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | wc -l)
 objCreated=0
 counter=0
 until [ $planObjects -eq $objCreated ]; do
@@ -99,7 +101,7 @@ until [ $planObjects -eq $objCreated ]; do
      exit 999
   fi
   sleep 10
-  objCreated=$(oc get installplan -n openshift-operators install-z5vzt -o yaml | grep -v "\"" | grep "  status:" | grep Created | wc -l)
+  objCreated=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep Created | wc -l)
 done
 
 echo "Step 5 - Creating MCM Core installation"
@@ -212,29 +214,29 @@ spec:
       name: techPreview
 EOF
 
-cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | wc -l)
-cscsvsucceed=$(oc get csv -n ibm-common-services --no-headers | grep Succeeded | wc -l)
+sleep 10
+
+cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | grep -v "Succeeded" | wc -l)
 counter=0
-until [ $cscsvcnt -le $cscsvsucceed ]; do
+until [ $cscsvcnt -le 0 ]; do
   ((counter++))
   if [ $counter -gt 40 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
   sleep 10
-  cscsvsucceed=$(oc get csv -n ibm-common-services --no-headers | grep Succeeded | wc -l)
+  cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | grep -v Succeeded | wc -l)
 done
 
-mcmcsvcnt=$(oc get csv -n kube-system --no-headers | wc -l)
-mcmcsvsucceed=$(oc get csv -n kube-system --no-headers | grep Succeeded | wc -l)
-until [ $mcmcsvcnt -le $mcmcsvsucceed ]; do
+mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
+until [ $mcmcsvcnt -le 0 ]; do
   ((counter++))
   if [ $counter -gt 60 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
   sleep 10
-  mcmcsvsucceed=$(oc get csv -n kube-system --no-headers | grep Succeeded | wc -l)
+  mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
 done
 
 exit 0

@@ -66,6 +66,7 @@ metadata:
 spec:
   template:
     spec:
+      serviceAccountName: cpeir
       containers:
       - name: installer
         env:

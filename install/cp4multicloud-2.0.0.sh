@@ -67,7 +67,7 @@ spec:
   template:
     spec:
       containers:
-      - name: ${name}-installer
+      - name: installer
         env:
         - name: ENTITLED_REGISTRY_KEY
           value: ${ENTITLED_REGISTRY_KEY}

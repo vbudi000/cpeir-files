@@ -84,11 +84,11 @@ spec:
         - name: CP4MCM_FILE_GID_STORAGECLASS
           value: ${CP4MCM_FILE_GID_STORAGECLASS}
         - name: ROKS
-          value: ${ROKS}
+          value: "${ROKS}"
         - name: ROKSREGION
-          value: ${ROKSREGION}
+          value: "${ROKSREGION}"
         - name: ROKSZONE
-          value: ${ROKSZONE}
+          value: "${ROKSZONE}"
         image: vbudi/cpeir-runtime:v0.04
         command: ["bash",  "installjob.sh", ${name}]
       restartPolicy: Never

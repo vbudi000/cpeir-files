@@ -58,7 +58,7 @@ export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_SECRET DOCKER_E
 export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS
 export ROKS ROKSREGION ROKSZONE
 
-oc create -f - <<EOF
+cat << EOF | oc create -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -89,7 +89,7 @@ spec:
           value: ${ROKSREGION}
         - name: ROKSZONE
           value: ${ROKSZONE}
-        image: vbudi/cpeir-runtime:v0.03
+        image: vbudi/cpeir-runtime:v0.04
         command: ["bash",  "installjob.sh", ${name}]
       restartPolicy: Never
 EOF

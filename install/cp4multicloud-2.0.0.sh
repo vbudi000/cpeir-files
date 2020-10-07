@@ -23,8 +23,9 @@ CP4MCM_NAMESPACE="cp4m"
 # Parameters for ROKS
 # Currently only used for CAM
 ###########################
-ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
-storclass=$(oc get cpeir cp4multicloud -o custom-columns=sc:spec.storageClass --no-headers)
+ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.image --no-headers | grep "bluemix|icr.io")
+# ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
+storclass=$(oc get cpeir ${objid} -o custom-columns=sc:spec.storageClass --no-headers)
 defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
 
 if [ $(oc get sc ${storclass} --no-headers 2>/dev/null | wc -l) -le 0 ]; then
@@ -39,8 +40,9 @@ if [ -z $ibmroks ]; then
   # check storage class
 else
   ROKS="true"
-  ROKSREGION=$(oc get node -o yaml | grep region | cut -d: -f2 | head -1 | tr -d '[:space:]')
-  ROKSZONE=""
+  node=$(oc get node --no-headers -o name | head -1)
+  ROKSREGION=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/region:" | cut -d: -f2 | tr -d '[:space:]')
+  ROKSZONE=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/zone:" | cut -d: -f2 | tr -d '[:space:]')
 fi
 
 CP4MCM_BLOCK_STORAGECLASS=${storclass}

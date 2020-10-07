@@ -27,7 +27,9 @@ until [ $OUTPUT = "READY" ]; do
      exit 999
   fi
   sleep 10
-  OUTPUT=$(oc get -n openshift-marketplace catalogsource  opencloud-operators -o custom-columns=stat:status.connectionState.lastObservedState --no-headers);
+  OUTPUT=$(oc get -n openshift-marketplace catalogsource  opencloud-operators -o custom-columns=stat:status.connectionState.lastObservedState --no-headers)
+  now=$(date)
+  echo "${now} - Processing opencloud-operators step ${counter} of 20 - ${OUTPUT}"
 done
 
 echo "Step 2 - Creating project for CloudPak for MultiCloud Manager "
@@ -35,6 +37,9 @@ echo "Step 2 - Creating project for CloudPak for MultiCloud Manager "
 oc new-project $CP4MCM_NAMESPACE
 
 oc create secret docker-registry $ENTITLED_REGISTRY_SECRET --docker-username=cp --docker-password=$ENTITLED_REGISTRY_KEY --docker-email=$DOCKER_EMAIL --docker-server=$ENTITLED_REGISTRY -n $CP4MCM_NAMESPACE
+
+now=$(date)
+echo "${now} - Project ${CP4CP4MCM_NAMESPACE} created"
 
 echo "Step 3 - Creating CatalogSource for CP4MCM"
 
@@ -61,12 +66,14 @@ OUTPUT="INITIAL"
 counter=0
 until [ $OUTPUT = "READY" ]; do
   ((counter++))
-  if [ $counter -gt 20 ]; then
+  if [ $counter -gt 40 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
   sleep 10
-  OUTPUT=$(oc get -n openshift-marketplace catalogsource  management-installer-index -o custom-columns=stat:status.connectionState.lastObservedState --no-headers);
+  OUTPUT=$(oc get -n openshift-marketplace catalogsource  management-installer-index -o custom-columns=stat:status.connectionState.lastObservedState --no-headers)
+  now=$(date)
+  echo "${now} - Processing management-installer-index step ${counter} of 40 - ${OUTPUT}"
 done
 
 echo "Step 4 - Creating MCM Subscription"
@@ -96,12 +103,14 @@ objCreated=0
 counter=0
 until [ $planObjects -eq $objCreated ]; do
   ((counter++))
-  if [ $counter -gt 20 ]; then
+  if [ $counter -gt 30 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
   sleep 10
   objCreated=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep Created | wc -l)
+  now=$(date)
+  echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - ${OUTPUT}"
 done
 
 echo "Step 5 - Creating MCM Core installation"
@@ -214,18 +223,24 @@ spec:
       name: techPreview
 EOF
 
+now=$(date)
+echo "${now} installation of mcm core initiated"
+
 sleep 10
 
 cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | grep -v "Succeeded" | wc -l)
 counter=0
 until [ $cscsvcnt -le 0 ]; do
   ((counter++))
-  if [ $counter -gt 40 ]; then
+  if [ $counter -gt 80 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
-  sleep 10
+  sleep 20
   cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | grep -v Succeeded | wc -l)
+  now=$(date)
+  echo "${now} - Checking common services operators step ${counter} of 80 - ${cscsvcnt}"
+
 done
 
 mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
@@ -237,6 +252,8 @@ until [ $mcmcsvcnt -le 0 ]; do
   fi
   sleep 10
   mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
+  now=$(date)
+  echo "${now} - Checking mcm operators step ${counter} of 80 - ${cscsvcnt}"
 done
 
 exit 0

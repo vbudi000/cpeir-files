@@ -23,7 +23,7 @@ CP4MCM_NAMESPACE="cp4m"
 # Parameters for ROKS
 # Currently only used for CAM
 ###########################
-ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.image --no-headers | grep "bluemix|icr.io")
+ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.image --no-headers | grep "bluemix.net\|icr.io")
 # ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
 storclass=$(oc get cpeir ${objid} -o custom-columns=sc:spec.storageClass --no-headers)
 defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )

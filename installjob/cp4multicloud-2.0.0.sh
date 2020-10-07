@@ -110,7 +110,7 @@ until [ $planObjects -eq $objCreated ]; do
   sleep 10
   objCreated=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep Created | wc -l)
   now=$(date)
-  echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - ${OUTPUT}"
+  echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - ${objCreated}"
 done
 
 echo "Step 5 - Creating MCM Core installation"

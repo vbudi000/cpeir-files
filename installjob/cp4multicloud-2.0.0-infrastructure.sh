@@ -5,36 +5,26 @@
 #
 echo "Creating CloudPak for MultiCloud Management - Infrastructure management"
 
+echo "Step 0 - Downloading cloudctl cli"
+
+curl -kLo cloudctl https://<cluster address>/api/cli/cloudctl-darwin-amd64
+chmod a+x cloudctl
+
 echo "Step 1 - Create management-infrastructure-management namespace."
 CP4MCM_IM_NAMESPACE="management-infrastructure-management"
 oc new-project ${CP4MCM_IM_NAMESPACE}
 
+export serviceIDName='service-deploy'
+export serviceApiKeyName='service-deploy-api-key'
+./cloudctl login -a <ibm_cloud_pak_mcm_console_url> --skip-ssl-validation -u admin -p password -n ${CP4MCM_IM_NAMESPACE}
+./cloudctl iam service-id-create ${serviceIDName} -d 'Service ID for service-deploy'
+./cloudctl iam service-policy-create ${serviceIDName} -r Administrator,ClusterAdministrator --service-name 'idmgmt'
+./cloudctl iam service-policy-create ${serviceIDName} -r Administrator,ClusterAdministrator --service-name 'identity'
+./cloudctl iam service-api-key-create ${serviceApiKeyName} ${serviceIDName} -d 'Api key for service-deploy'
+
 echo "Step 2 - Modifying installation object - setting installation parameters"
 #
 # Updating Installation config with CAM config.
-#
-if [ $ROKS != "true" ];
-then
-oc patch installation.orchestrator.management.ibm.com ibm-management -n $CP4MCM_NAMESPACE --type=json -p="[
- {"op": "test",
-  "path": "/spec/pakModules/0/name",
-  "value": "infrastructureManagement" },
- {"op": "add",
-  "path": "/spec/pakModules/0/config/3/spec",
-  "value":
-        { "manageservice": {
-            "camMongoPV": {"persistence": { "storageClassName": $CP4MCM_FILE_GID_STORAGECLASS}},
-            "camTerraformPV": {"persistence": { "storageClassName": $CP4MCM_FILE_GID_STORAGECLASS}},
-            "camLogsPV": {"persistence": { "storageClassName": $CP4MCM_FILE_GID_STORAGECLASS}},
-            "license": {"accept": true}
-            }
-        }
-  }
-]";
-else
-
-#
-# Updating Installation config with CAM config with ROKS.
 #
 oc patch installation.orchestrator.management.ibm.com ibm-management -n $CP4MCM_NAMESPACE --type=json -p="[
  {"op": "test",
@@ -49,14 +39,13 @@ oc patch installation.orchestrator.management.ibm.com ibm-management -n $CP4MCM_
             "camLogsPV": {"persistence": { "storageClassName": $CP4MCM_FILE_GID_STORAGECLASS}},
             "global": { "iam": { "deployApiKey": $CAM_API_KEY}},
             "license": {"accept": true},
-            "roks": true,
+            "roks": ""$ROKS",
             "roksRegion": "$ROKSREGION",
             "roksZone": "$ROKSZONE"
             }
         }
   }
 ]"
-fi
 
 echo "Step 3 - Modifying installation object - starting installation "
 

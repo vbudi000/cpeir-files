@@ -4,13 +4,14 @@ filename=$(basename $0)
 name="${filename%.*}"
 version=$(echo ${name} | cut -d- -f2)
 
-mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+mcmcsvphase=$(oc get csv -n management-monitoring --no-headers | grep -v "Succeeded" | wc -l)
 
-if [ "$mcmcsvphase" = "Succeeded" ]; then
-  inst="true"
-else
+if [ "$mcmcsvphase" -gt 0 ]; then
   inst="false"
+else
+  inst="true"
 fi
+
 
 echo "{\"installed\": ${inst}, \"name\": \"${name}\", \"version\": \"${version}\"}"
 exit 0

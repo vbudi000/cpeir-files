@@ -1,5 +1,4 @@
 #!/bin/bash
-
 fn=$(basename $0)
 name="${fn%.*}"
 
@@ -23,8 +22,9 @@ CP4MCM_NAMESPACE="cp4m"
 # Parameters for ROKS
 # Currently only used for CAM
 ###########################
-ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
-storclass=$(oc get cpeir cp4multicloud -o custom-columns=sc:spec.storageClass --no-headers)
+ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.image --no-headers | grep "bluemix.net\|icr.io")
+# ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
+storclass=$(oc get cpeir ${objid} -o custom-columns=sc:spec.storageClass --no-headers)
 defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
 
 if [ $(oc get sc ${storclass} --no-headers 2>/dev/null | wc -l) -le 0 ]; then
@@ -39,8 +39,9 @@ if [ -z $ibmroks ]; then
   # check storage class
 else
   ROKS="true"
-  ROKSREGION=$(oc get node -o yaml | grep region | cut -d: -f2 | head -1 | tr -d '[:space:]')
-  ROKSZONE=""
+  node=$(oc get node --no-headers -o name | head -1)
+  ROKSREGION=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/region:" | cut -d: -f2 | tr -d '[:space:]')
+  ROKSZONE=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/zone:" | cut -d: -f2 | tr -d '[:space:]')
 fi
 
 CP4MCM_BLOCK_STORAGECLASS=${storclass}
@@ -58,7 +59,7 @@ export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_SECRET DOCKER_E
 export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS
 export ROKS ROKSREGION ROKSZONE
 
-oc create -f - <<EOF
+cat << EOF | oc create -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -66,8 +67,9 @@ metadata:
 spec:
   template:
     spec:
+      serviceAccountName: cpeir
       containers:
-      - name: ${name}-installer
+      - name: installer
         env:
         - name: ENTITLED_REGISTRY_KEY
           value: ${ENTITLED_REGISTRY_KEY}
@@ -84,12 +86,12 @@ spec:
         - name: CP4MCM_FILE_GID_STORAGECLASS
           value: ${CP4MCM_FILE_GID_STORAGECLASS}
         - name: ROKS
-          value: ${ROKS}
+          value: "${ROKS}"
         - name: ROKSREGION
-          value: ${ROKSREGION}
+          value: "${ROKSREGION}"
         - name: ROKSZONE
-          value: ${ROKSZONE}
-        image: vbudi/cpeir-runtime:v0.03
+          value: "${ROKSZONE}"
+        image: vbudi/cpeir-runtime:v0.05
         command: ["bash",  "installjob.sh", ${name}]
       restartPolicy: Never
 EOF

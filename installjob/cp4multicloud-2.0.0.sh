@@ -26,7 +26,7 @@ until [ $OUTPUT = "READY" ]; do
      echo "Timeout waiting for ready"
      exit 999
   fi
-  sleep 10
+  sleep 20
   OUTPUT=$(oc get -n openshift-marketplace catalogsource  opencloud-operators -o custom-columns=stat:status.connectionState.lastObservedState --no-headers)
   now=$(date)
   echo "${now} - Processing opencloud-operators step ${counter} of 20 - ${OUTPUT}"
@@ -70,7 +70,7 @@ until [ $OUTPUT = "READY" ]; do
      echo "Timeout waiting for ready"
      exit 999
   fi
-  sleep 10
+  sleep 20
   OUTPUT=$(oc get -n openshift-marketplace catalogsource  management-installer-index -o custom-columns=stat:status.connectionState.lastObservedState --no-headers)
   now=$(date)
   echo "${now} - Processing management-installer-index step ${counter} of 40 - ${OUTPUT}"
@@ -93,24 +93,23 @@ spec:
   startingCSV: ibm-management-orchestrator.v2.0.0
 EOF
 
+sleep 5
 
 installPlan=$(oc get subscription -n openshift-operators ibm-management-orchestrator -o custom-columns=plan:status.installPlanRef.name --no-headers)
 
-sleep 10
+sleep 5
 
-planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | wc -l)
-objCreated=0
-counter=0
-until [ $planObjects -eq $objCreated ]; do
+planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep "Created\|True" | wc -l)
+until [ $planObjects -eq 0 ]; do
   ((counter++))
   if [ $counter -gt 30 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
-  sleep 10
-  objCreated=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep Created | wc -l)
+  sleep 20
+  planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep "Created\|True" | wc -l)
   now=$(date)
-  echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - ${objCreated}"
+  echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - objects to be created ${planObjects}"
 done
 
 echo "Step 5 - Creating MCM Core installation"
@@ -239,21 +238,23 @@ until [ $cscsvcnt -le 0 ]; do
   sleep 20
   cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | grep -v Succeeded | wc -l)
   now=$(date)
-  echo "${now} - Checking common services operators step ${counter} of 80 - ${cscsvcnt}"
+  echo "${now} - Checking common services operators step ${counter} of 80 - Remaining CSV: ${cscsvcnt}"
 
 done
 
 mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
+now=$(date)
+echo "${now} - Checking mcm operators step ${counter} of 80 - Remaining CSV: ${mcmcsvcnt}"
 until [ $mcmcsvcnt -le 0 ]; do
   ((counter++))
-  if [ $counter -gt 60 ]; then
+  if [ $counter -gt 120 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
-  sleep 10
+  sleep 20
   mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
   now=$(date)
-  echo "${now} - Checking mcm operators step ${counter} of 80 - ${cscsvcnt}"
+  echo "${now} - Checking mcm operators step ${counter} of 80 - Remaining CSV: ${mcmcsvcnt}"
 done
 
 exit 0

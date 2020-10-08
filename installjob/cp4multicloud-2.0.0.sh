@@ -99,7 +99,7 @@ installPlan=$(oc get subscription -n openshift-operators ibm-management-orchestr
 
 sleep 5
 
-planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep "Created\|True" | wc -l)
+planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep -v "Created\|True" | wc -l)
 until [ $planObjects -eq 0 ]; do
   ((counter++))
   if [ $counter -gt 30 ]; then
@@ -107,7 +107,7 @@ until [ $planObjects -eq 0 ]; do
      exit 999
   fi
   sleep 20
-  planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep "Created\|True" | wc -l)
+  planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep -v "Created\|True" | wc -l)
   now=$(date)
   echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - objects to be created ${planObjects}"
 done

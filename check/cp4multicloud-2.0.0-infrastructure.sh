@@ -3,14 +3,15 @@
 filename=$(basename $0)
 name="${filename%.*}"
 version=$(echo ${name} | cut -d- -f2)
+cpname=$(echo ${name} | cut -d- -f1)
+feature=$(echo ${name} | cut -d- -f3)
 
+mcmcsvphase=$(oc get csv ibm-management-im-install.v2.0.0 -n management-infrastructure-management --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
 
-mcmcsvphase=$(oc get csv -n management-infrastructure-management --no-headers | grep -v "Succeeded" | wc -l)
-
-if [ "$mcmcsvphase" -gt 0 ]; then
-  inst="false"
-else
+if [ "$mcmcsvphase" = "Succeeded" ]; then
   inst="true"
+else
+  inst="false"
 fi
 
 echo "{\"installed\": ${inst}, \"name\": \"${name}\", \"version\": \"${version}\"}"

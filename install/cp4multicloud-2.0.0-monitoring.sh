@@ -1,6 +1,8 @@
 #!/bin/bash
 fn=$(basename $0)
 name="${fn%.*}"
+cpname=$(echo ${name} | cut -d- -f1)
+feature=$(echo ${name} | cut -d- -f3)
 
 objid=$1
 

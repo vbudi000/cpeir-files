@@ -1,240 +1,131 @@
 #!/bin/bash
 
-echo "Step 1 - Creating CatalogSource for opencloud-operators"
+echo "Creating CloudPak for MultiCloud Management - Advanced monitoring"
 
-oc create -f - <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: opencloud-operators
-  namespace: openshift-marketplace
-spec:
-  displayName: IBMCS Operators
-  publisher: IBM
-  sourceType: grpc
-  image: docker.io/ibmcom/ibm-common-service-catalog:latest
-  updateStrategy:
-    registryPoll:
-      interval: 45m
-EOF
-
-OUTPUT="INITIAL"
 counter=0
-until [ $OUTPUT = "READY" ]; do
+mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+
+until [ "$mcmcsvphase" = "Succeeded" ]; do
   ((counter++))
-  if [ $counter -gt 20 ]; then
+  if [ $counter -gt 100 ]; then
+     echo "Timeout waiting for MCM core"
+     exit 999
+  fi
+  sleep 60
+  mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+  now=$(date)
+  echo "${now} - Checking whether MCM core is installed; step ${counter} of 100"
+done
+now=$(date)
+echo "${now} - MCM core is installed "
+
+
+#
+# Adding Monitoring Storage Config.
+#
+echo "Step 0 - Setup namespace"
+CP4MCM_MON_NAMESPACE="management-monitoring"
+oc new-project ${CP4MCM_MON_NAMESPACE}
+
+echo "Step 1 - Adding Monitoring Storage Config to Installation"
+oc patch installation.orchestrator.management.ibm.com ibm-management -n $CP4MCM_NAMESPACE --type=json -p="[
+ {"op": "test",
+  "path": "/spec/pakModules/1/name",
+  "value": "monitoring" },
+ {"op": "replace",
+  "path": "/spec/pakModules/1/config/0/spec",
+  "value":
+    {
+      "monitoringDeploy": {
+        "cnmonitoringimagesource": {
+          "deployMCMResources": true
+        },
+        "global": {
+          "environmentSize": size0,
+          "persistence": {
+            "storageClassOption": {
+              "cassandrabak": none,
+              "cassandradata": $CP4MCM_BLOCK_STORAGECLASS,
+              "couchdbdata": $CP4MCM_BLOCK_STORAGECLASS,
+              "datalayerjobs": $CP4MCM_BLOCK_STORAGECLASS,
+              "elasticdata": $CP4MCM_BLOCK_STORAGECLASS,
+              "kafkadata": $CP4MCM_BLOCK_STORAGECLASS,
+              "zookeeperdata": $CP4MCM_BLOCK_STORAGECLASS
+            },
+            "storageSize": {
+              "cassandrabak": 50Gi,
+              "cassandradata": 50Gi,
+              "couchdbdata": 5Gi,
+              "datalayerjobs": 5Gi,
+              "elasticdata": 5Gi,
+              "kafkadata": 10Gi,
+              "zookeeperdata": 1Gi
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+
+#
+# Updating Installation config with CAM config.
+#
+echo "Step 2 - Enabling Monitoring Module"
+oc patch installation.orchestrator.management.ibm.com ibm-management -n $CP4MCM_NAMESPACE --type=json -p='[
+ {"op": "test",
+  "path": "/spec/pakModules/1/name",
+  "value": "monitoring" },
+ {"op": "replace",
+  "path": "/spec/pakModules/1/enabled",
+  "value": true }
+]'
+
+echo "Step 3 - Waiting for installation to complete"
+sleep 5
+mcmcsvcnt=0
+until [ $mcmcsvcnt -gt 0 ]; do
+  mcmcsvcnt=$(oc get csv ibm-management-monitoring.v2.0.0 -n ${CP4MCM_MON_NAMESPACE} --no-headers | wc -l)
+  sleep 5
+done
+
+counter=0
+mcmcsvcnt=$(oc get csv -n ${CP4MCM_MON_NAMESPACE} --no-headers | grep -v "Succeeded" | wc -l)
+now=$(date)
+echo "${now} - Checking mcm im operators step ${counter} of 100 - Remaining CSV: ${mcmcsvcnt}"
+until [ $mcmcsvcnt -le 0 ]; do
+  ((counter++))
+  if [ $counter -gt 100 ]; then
      echo "Timeout waiting for ready"
      exit 999
   fi
-  sleep 10
-  OUTPUT=$(oc get -n openshift-marketplace catalogsource  opencloud-operators -o custom-columns=stat:status.connectionState.lastObservedState --no-headers);
+  sleep 20
+  mcmcsvcnt=$(oc get csv -n ${CP4MCM_MON_NAMESPACE} --no-headers | grep -v "Succeeded" | wc -l)
+  now=$(date)
+  echo "${now} - Checking mcm im operators step ${counter} of 100 - Remaining CSV: ${mcmcsvcnt}"
 done
 
-echo "Step 2 - Creating project for CloudPak for MultiCloud Manager "
+sleep 10
 
-oc new-project $CP4MCM_NAMESPACE
+echo "Step 4 - Setting up image pull secret for monitoring"
 
-oc create secret docker-registry $ENTITLED_REGISTRY_SECRET --docker-username=cp --docker-password=$ENTITLED_REGISTRY_KEY --docker-email=$DOCKER_EMAIL --docker-server=$ENTITLED_REGISTRY -n $CP4MCM_NAMESPACE
+echo "Docker config for SECRET=$ENTITLED_REGISTRY_SECRET in NAMESPACE=$CP4MCM_NAMESPACE"
+ENTITLED_REGISTRY_DOCKERCONFIG=$(oc get secret $ENTITLED_REGISTRY_SECRET -n $CP4MCM_NAMESPACE -o jsonpath='{.data.\.dockerconfigjson}')
+oc patch deployable.app.ibm.com/cnmon-pullsecret-deployable -p $(echo {\"spec\":{\"template\":{\"data\":{\".dockerconfigjson\":\"$ENTITLED_REGISTRY_DOCKERCONFIG\"}}}}) --type merge -n ${CP4MCM_MON_NAMESPACE}
 
-echo "Step 3 - Creating CatalogSource for CP4MCM"
-
-# CP4MCM CatalogSource
-oc create -f - <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: management-installer-index
-  namespace: openshift-marketplace
-spec:
-  displayName: CP4MCM Installer Catalog
-  publisher: IBM CP4MCM
-  sourceType: grpc
-  image: quay.io/cp4mcm/cp4mcm-orchestrator-catalog:2.0.0
-  updateStrategy:
-    registryPoll:
-      interval: 45m
-  secrets:
-   - $ENTITLED_REGISTRY_SECRET
-EOF
-
-OUTPUT="INITIAL"
+echo "Step 5 - Make sure all pods are running in $CP4CP4MCM_MON_NAMESPACE"
+mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE | grep -v "Running\|Completed" | wc -l)
 counter=0
-until [ $OUTPUT = "READY" ]; do
-  ((counter++))
-  if [ $counter -gt 20 ]; then
-     echo "Timeout waiting for ready"
-     exit 999
-  fi
-  sleep 10
-  OUTPUT=$(oc get -n openshift-marketplace catalogsource  management-installer-index -o custom-columns=stat:status.connectionState.lastObservedState --no-headers);
-done
-
-echo "Step 4 - Creating MCM Subscription"
-
-cat << EOF | oc apply -f -
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: ibm-management-orchestrator
-  namespace: openshift-operators
-spec:
-  channel: 2.0-stable
-  installPlanApproval: Automatic
-  name: ibm-management-orchestrator
-  source: management-installer-index
-  sourceNamespace: openshift-marketplace
-  startingCSV: ibm-management-orchestrator.v2.0.0
-EOF
-
-
-installPlan=$(oc get subscription -n openshift-operators ibm-management-orchestrator -o custom-columns=plan:status.installPlanRef.name --no-headers)
-
-planObjects=$(oc get installplan -n openshift-operators install-z5vzt -o yaml | grep -v "\"" | grep "  status:" | wc -l)
-objCreated=0
-counter=0
-until [ $planObjects -eq $objCreated ]; do
-  ((counter++))
-  if [ $counter -gt 20 ]; then
-     echo "Timeout waiting for ready"
-     exit 999
-  fi
-  sleep 10
-  objCreated=$(oc get installplan -n openshift-operators install-z5vzt -o yaml | grep -v "\"" | grep "  status:" | grep Created | wc -l)
-done
-
-echo "Step 5 - Creating MCM Core installation"
-
-cat << EOF | oc apply -f -
-apiVersion: orchestrator.management.ibm.com/v1alpha1
-kind: Installation
-metadata:
-  name: ibm-management
-  namespace: $CP4MCM_NAMESPACE
-spec:
-  storageClass: $CP4MCM_BLOCK_STORAGECLASS
-  imagePullSecret: $ENTITLED_REGISTRY_SECRET
-  license:
-    accept: true
-  mcmCoreDisabled: false
-  pakModules:
-    - config:
-        - enabled: true
-          name: ibm-management-im-install
-          spec: {}
-        - enabled: true
-          name: ibm-management-infra-grc
-          spec: {}
-        - enabled: true
-          name: ibm-management-infra-vm
-          spec: {}
-        - enabled: true
-          name: ibm-management-cam-install
-          spec: {}
-        - enabled: true
-          name: ibm-management-service-library
-          spec: {}
-      enabled: false
-      name: infrastructureManagement
-    - config:
-        - enabled: true
-          name: ibm-management-monitoring
-          spec:
-            operandRequest: {}
-            monitoringDeploy:
-              global:
-                environmentSize: size0
-                persistence:
-                  storageClassOption:
-                    cassandrabak: none
-                    cassandradata: default
-                    couchdbdata: default
-                    datalayerjobs: default
-                    elasticdata: default
-                    kafkadata: default
-                    zookeeperdata: default
-                  storageSize:
-                    cassandrabak: 50Gi
-                    cassandradata: 50Gi
-                    couchdbdata: 5Gi
-                    datalayerjobs: 5Gi
-                    elasticdata: 5Gi
-                    kafkadata: 10Gi
-                    zookeeperdata: 1Gi
-      enabled: false
-      name: monitoring
-    - config:
-        - enabled: true
-          name: ibm-management-notary
-          spec: {}
-        - enabled: true
-          name: ibm-management-image-security-enforcement
-          spec: {}
-        - enabled: false
-          name: ibm-management-mutation-advisor
-          spec: {}
-        - enabled: false
-          name: ibm-management-vulnerability-advisor
-          spec:
-            controlplane:
-              esSecurityEnabled: true
-              esServiceName: elasticsearch.ibm-common-services
-              esSecretName: logging-elk-certs
-              esSecretCA: ca.crt
-              esSecretCert: curator.crt
-              esSecretKey: curator.key
-            annotator:
-              esSecurityEnabled: true
-              esServiceName: elasticsearch.ibm-common-services
-              esSecretName: logging-elk-certs
-              esSecretCA: ca.crt
-              esSecretCert: curator.crt
-              esSecretKey: curator.key
-            indexer:
-              esSecurityEnabled: true
-              esServiceName: elasticsearch.ibm-common-services
-              esSecretName: logging-elk-certs
-              esSecretCA: ca.crt
-              esSecretCert: curator.crt
-              esSecretKey: curator.key
-      enabled: false
-      name: securityServices
-    - config:
-        - enabled: true
-          name: ibm-management-sre-chatops
-          spec: {}
-      enabled: false
-      name: operations
-    - config:
-        - enabled: true
-          name: ibm-management-manage-runtime
-          spec: {}
-      enabled: false
-      name: techPreview
-EOF
-
-cscsvcnt=$(oc get csv -n ibm-common-services --no-headers | wc -l)
-cscsvsucceed=$(oc get csv -n ibm-common-services --no-headers | grep Succeeded | wc -l)
-counter=0
-until [ $cscsvcnt -le $cscsvsucceed ]; do
+until [ $mcmpodcnt -eq 0 ]; do
   ((counter++))
   if [ $counter -gt 40 ]; then
-     echo "Timeout waiting for ready"
-     exit 999
+    echo "Pod are not yet all running - here are the left over"
+    oc get pod -n $CP4MCM_MON_NAMESPACE | grep -v "Running\|Completed"
+    exit 999
   fi
-  sleep 10
-  cscsvsucceed=$(oc get csv -n ibm-common-services --no-headers | grep Succeeded | wc -l)
+  sleep 20
+  mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE | grep -v "Running\|Completed" | wc -l)
+  now=$(date)
+  echo "${now} - Checking pod that are not running step ${counter} of 40 - Remaining pod: ${mcmpodcnt}"
 done
-
-mcmcsvcnt=$(oc get csv -n kube-system --no-headers | wc -l)
-mcmcsvsucceed=$(oc get csv -n kube-system --no-headers | grep Succeeded | wc -l)
-until [ $mcmcsvcnt -le $mcmcsvsucceed ]; do
-  ((counter++))
-  if [ $counter -gt 60 ]; then
-     echo "Timeout waiting for ready"
-     exit 999
-  fi
-  sleep 10
-  mcmcsvsucceed=$(oc get csv -n kube-system --no-headers | grep Succeeded | wc -l)
-done
-
 exit 0

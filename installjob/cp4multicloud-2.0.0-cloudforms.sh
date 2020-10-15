@@ -208,12 +208,12 @@ EOF
 #
 echo "Step 6 - Waiting for installation to complete. (180 seconds)"
 sleep 20
-pendingcnt=(oc get pod -n management-infrastructure-management --no-headers | grep -v "Running\|Completed" | wc -l)
+pendingcnt=$(oc get pod -n management-infrastructure-management --no-headers | grep -v "Running\|Completed" | wc -l)
 counter=0
 until [ $pendingcnt -le 0 ]; do
   ((counter++))
   sleep 40
-  pendingcnt=(oc get pod -n management-infrastructure-management --no-headers | grep -v "Running\|Completed" | wc -l)
+  pendingcnt=$(oc get pod -n management-infrastructure-management --no-headers | grep -v "Running\|Completed" | wc -l)
   if [ $counter -gt 40 ]; then
     echo "counter too much"
     exit 999

@@ -17,6 +17,13 @@ done
 now=$(date)
 echo "${now} - MCM core is installed "
 
+# Setting up ansible
+
+sudo cat "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+sudo apt update
+sudo apt install ansible
+
 # Additional packages can be found here:
 ANSIBLE_SETUP_PACKAGE="ansible-tower-openshift-setup-3.7.2-1.tar.gz"
 ANSIBLE_NAMESPACE="management-ansible-tower"

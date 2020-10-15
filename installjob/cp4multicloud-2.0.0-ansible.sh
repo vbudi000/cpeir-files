@@ -1,5 +1,22 @@
 #!/bin/bash
 
+counter=0
+mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+
+until [ "$mcmcsvphase" = "Succeeded" ]; do
+  ((counter++))
+  if [ $counter -gt 100 ]; then
+     echo "Timeout waiting for MCM core"
+     exit 999
+  fi
+  sleep 60
+  mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+  now=$(date)
+  echo "${now} - Checking whether MCM core is installed; step ${counter} of 100"
+done
+now=$(date)
+echo "${now} - MCM core is installed "
+
 # Additional packages can be found here:
 ANSIBLE_SETUP_PACKAGE="ansible-tower-openshift-setup-3.7.2-1.tar.gz"
 ANSIBLE_NAMESPACE="management-ansible-tower"

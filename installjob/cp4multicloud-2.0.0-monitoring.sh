@@ -114,7 +114,7 @@ ENTITLED_REGISTRY_DOCKERCONFIG=$(oc get secret $ENTITLED_REGISTRY_SECRET -n $CP4
 oc patch deployable.app.ibm.com/cnmon-pullsecret-deployable -p $(echo {\"spec\":{\"template\":{\"data\":{\".dockerconfigjson\":\"$ENTITLED_REGISTRY_DOCKERCONFIG\"}}}}) --type merge -n ${CP4MCM_MON_NAMESPACE}
 
 echo "Step 5 - Make sure all pods are running in $CP4CP4MCM_MON_NAMESPACE"
-mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE | grep -v "Running\|Completed" | wc -l)
+mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE --no-headers | grep -v "Running\|Completed" | wc -l)
 counter=0
 until [ $mcmpodcnt -eq 0 ]; do
   ((counter++))
@@ -124,7 +124,7 @@ until [ $mcmpodcnt -eq 0 ]; do
     exit 999
   fi
   sleep 20
-  mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE | grep -v "Running\|Completed" | wc -l)
+  mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE --no-headers | grep -v "Running\|Completed" | wc -l)
   now=$(date)
   echo "${now} - Checking pod that are not running step ${counter} of 40 - Remaining pod: ${mcmpodcnt}"
 done

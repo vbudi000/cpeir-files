@@ -111,9 +111,17 @@ echo "Step 4 - Setting up image pull secret for monitoring"
 
 echo "Docker config for SECRET=$ENTITLED_REGISTRY_SECRET in NAMESPACE=$CP4MCM_NAMESPACE"
 ENTITLED_REGISTRY_DOCKERCONFIG=$(oc get secret $ENTITLED_REGISTRY_SECRET -n $CP4MCM_NAMESPACE -o jsonpath='{.data.\.dockerconfigjson}')
+depl=$(oc get deployable.app.ibm.com/cnmon-pullsecret-deployable -o name -n $CP4MCM_MON_NAMESPACE 2>/dev/null)
+counter=0
+while [ -z $depl ]; do
+  ((counter++))
+  sleep 10
+  echo $counter
+  depl=$(oc get deployable.app.ibm.com/cnmon-pullsecret-deployable -o name -n $CP4MCM_MON_NAMESPACE 2>/dev/null)
+done
 oc patch deployable.app.ibm.com/cnmon-pullsecret-deployable -p $(echo {\"spec\":{\"template\":{\"data\":{\".dockerconfigjson\":\"$ENTITLED_REGISTRY_DOCKERCONFIG\"}}}}) --type merge -n ${CP4MCM_MON_NAMESPACE}
 
-echo "Step 5 - Make sure all pods are running in $CP4CP4MCM_MON_NAMESPACE"
+echo "Step 5 - Make sure all pods are running in $"
 mcmpodcnt=$(oc get pod -n $CP4MCM_MON_NAMESPACE --no-headers | grep -v "Running\|Completed" | wc -l)
 counter=0
 until [ $mcmpodcnt -eq 0 ]; do

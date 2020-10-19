@@ -27,7 +27,14 @@ CP4MCM_NAMESPACE="cp4m"
 ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.image --no-headers | grep "bluemix.net\|icr.io")
 # ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
 storclass=$(oc get cpeir ${objid} -o custom-columns=sc:spec.storageClass --no-headers)
+storfeatclass=$(oc get cpeir ${objid} -o json | jq -r '.spec.cpfeatures[] | select(.name=="monitoring") | .storageClass')
+
 defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
+
+if [ -z $storfeatclass ]; then
+  storfeatclass=$storclass
+fi
+storclass=$storfeatclass
 
 if [ $(oc get sc ${storclass} --no-headers 2>/dev/null | wc -l) -le 0 ]; then
   echo { "error": "Storage Class ${storclass} is invalid" }

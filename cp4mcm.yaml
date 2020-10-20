@@ -1,0 +1,15 @@
+apiVersion: cloud.ibm.com/v1alpha1
+kind: CPeir
+metadata:
+  name: cp4multicloud
+spec:
+  cptype: "cp4multicloud"
+  cpversion: "2.0.0"
+  cpsizetype: "default"
+  storageClass: "ocs-storagecluster-ceph-rbd"
+  cpfeatures: 
+   - name: monitoring
+     storageClass: "ocs-storagecluster-ceph-rbd"
+   - name: infrastructure
+     storageClass: "ocs-storagecluster-ceph-rbd"
+  action: "Check"

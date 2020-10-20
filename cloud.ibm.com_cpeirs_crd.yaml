@@ -1,0 +1,163 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: cpeirs.cloud.ibm.com
+spec:
+  group: cloud.ibm.com
+  names:
+    kind: CPeir
+    listKind: CPeirList
+    plural: cpeirs
+    singular: cpeir
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: CPeir is the Schema for the cpeirs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: CPeirSpec defines the desired state of CPeir
+          properties:
+            action:
+              enum:
+              - Check
+              - Install
+              - HealthCheck
+              - Upgrade
+              type: string
+            cpfeatures:
+              items:
+                properties:
+                  name:
+                    description: Feature name
+                    type: string
+                  storageClass:
+                    description: StorageClass name if needed
+                    type: string
+                required:
+                - name
+                - storageClass
+                type: object
+              type: array
+            cpsizetype:
+              type: string
+            cptype:
+              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                Important: Run "operator-sdk generate k8s" to regenerate code after
+                modifying this file Add custom validation using kubebuilder tags:
+                https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html'
+              type: string
+            cpversion:
+              type: string
+            storageClass:
+              type: string
+          required:
+          - action
+          - cpfeatures
+          - cpsizetype
+          - cptype
+          - cpversion
+          - storageClass
+          type: object
+        status:
+          description: CPeirStatus defines the observed state of CPeir
+          properties:
+            CPStatus:
+              description: Status of the CloudPak in the cluster
+              enum:
+              - Initial
+              - NotInstallable
+              - ReadyToInstall
+              - Installed
+              - ValidationFailed
+              - UpgradeAvailable
+              type: string
+            cluster:
+              description: Retrieved Cluster characteristics
+              properties:
+                clusterArch:
+                  description: Worker node architecture
+                  type: string
+                clusterCpu:
+                  description: Allocatable CPU in worker nodes
+                  type: string
+                clusterMemory:
+                  description: Allocatable memory in worker nodes
+                  type: string
+                clusterStorage:
+                  description: Available Storage - TBD - now showing 0
+                  type: string
+                clusterVersion:
+                  description: Worker node kubelet version
+                  type: string
+                clusterWorkerNum:
+                  description: Number of Worker nodes
+                  type: integer
+                ocpVersion:
+                  description: OpenShift version
+                  type: string
+              required:
+              - clusterCpu
+              - clusterMemory
+              - clusterStorage
+              - ocpVersion
+              type: object
+            cpreq:
+              description: Calculated CloudPak requirements
+              properties:
+                cpreqcpu:
+                  description: CPU installation requirement
+                  type: string
+                cpreqmemory:
+                  description: Memory installation requirement
+                  type: string
+                cpreqstorage:
+                  description: Storage (PVC) installation requirement
+                  type: string
+              required:
+              - cpreqcpu
+              - cpreqmemory
+              - cpreqstorage
+              type: object
+            installedFeatures:
+              description: List of installed features as investigated - TBD - now
+                empty
+              items:
+                type: string
+              type: array
+            offlineInstall:
+              description: available image registry space -
+              type: boolean
+            onlineInstall:
+              description: access to cp.icr.io
+              type: boolean
+            statusMessages:
+              description: Miscellaneous messages from the operator run
+              type: string
+          required:
+          - CPStatus
+          - cluster
+          - cpreq
+          - statusMessages
+          type: object
+      required:
+      - spec
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true

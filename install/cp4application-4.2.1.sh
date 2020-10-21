@@ -17,6 +17,9 @@ ENTITLED_REGISTRY_KEY=${entitlement}
 ENTITLED_REGISTRY_USER=cp
 ENTITLED_REGISTRY="cp.icr.io"
 
+OPENSHIFT_URL=$(oc cluster-info | grep running | cut -d" " -f6)
+OPENSHIFT_TOKEN=$(oc whoami -t)
+
 ###########################
 # Parameters for ROKS
 # Currently only used for CAM
@@ -42,6 +45,9 @@ else
   ROKSREGION=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/region:" | cut -d: -f2 | tr -d '[:space:]')
   ROKSZONE=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/zone:" | cut -d: -f2 | tr -d '[:space:]')
 fi
+
+oc create secret docker-registry icpa --docker-password=${ENTITLED_REGISTRY_KEY} --docker-username=${ENTITLED_REGISTRY_USER} --docker-email="myuser@ibm.com" --docker-server="cp.icr.io"
+oc secret link cpeir icpa --for=pull
 
 running=$(oc get job ${name}-installer -n cpeir --no-headers 2>/dev/null | wc -l)
 
@@ -73,6 +79,10 @@ spec:
           value: ${ENTITLED_REGISTRY}
         - name: ENTITLED_REGISTRY_USER
           value: ${ENTITLED_REGISTRY_USER}
+        - name: OPENSHIFT_URL
+          value: ${OPENSHIFT_URL}
+        - name: OPENSHIFT_TOKEN
+          value: ${OPENSHIFT_TOKEN}
         - name: ROKS
           value: "${ROKS}"
         - name: ROKSREGION
@@ -80,7 +90,7 @@ spec:
         - name: ROKSZONE
           value: "${ROKSZONE}"
         image: $ENTITLED_REGISTRY/cp/icpa/icpa-installer:$version
-        command: ["install"]
+        command: ["main.sh", "install"]
       restartPolicy: Never
 EOF
 

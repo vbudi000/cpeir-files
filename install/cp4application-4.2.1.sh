@@ -80,9 +80,9 @@ spec:
         - name: ENTITLED_REGISTRY_USER
           value: ${ENTITLED_REGISTRY_USER}
         - name: OPENSHIFT_URL
-          value: ${OPENSHIFT_URL}
+          value: "${OPENSHIFT_URL}"
         - name: OPENSHIFT_TOKEN
-          value: ${OPENSHIFT_TOKEN}
+          value: "${OPENSHIFT_TOKEN}"
         - name: ROKS
           value: "${ROKS}"
         - name: ROKSREGION

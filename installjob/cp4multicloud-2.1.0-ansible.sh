@@ -1,7 +1,7 @@
 #!/bin/bash
 
 counter=0
-mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.1.5 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
 
 until [ "$mcmcsvphase" = "Succeeded" ]; do
   ((counter++))
@@ -10,7 +10,7 @@ until [ "$mcmcsvphase" = "Succeeded" ]; do
      exit 999
   fi
   sleep 60
-  mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.0.0 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+  mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.1.5 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
   now=$(date)
   echo "${now} - Checking whether MCM core is installed; step ${counter} of 100"
 done

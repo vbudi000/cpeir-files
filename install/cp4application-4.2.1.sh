@@ -59,7 +59,7 @@ fi
 export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_USER
 export ROKS ROKSREGION ROKSZONE
 
-cat << EOF > test.yaml
+cat << EOF | oc create -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -90,7 +90,7 @@ spec:
         - name: ROKSZONE
           value: "${ROKSZONE}"
         image: $ENTITLED_REGISTRY/cp/icpa/icpa-installer:$version
-        command: ["main.sh", "install"]
+        command: ["bash", "main.sh", "install"]
       restartPolicy: Never
 EOF
 

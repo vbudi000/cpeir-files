@@ -1,8 +1,8 @@
 #!/bin/bash
-
 fn=$(basename $0)
 name="${fn%.*}"
-version=$(echo ${name} | cut -d"-" -f2)
+cpname=$(echo ${name} | cut -d- -f1)
+feature=$(echo ${name} | cut -d- -f3)
 
 objid=$1
 
@@ -14,11 +14,11 @@ if [ -z $entitlement ]; then
 fi
 
 ENTITLED_REGISTRY_KEY=${entitlement}
-ENTITLED_REGISTRY_USER=cp
 ENTITLED_REGISTRY="cp.icr.io"
+ENTITLED_REGISTRY_SECRET="ibm-management-pull-secret"
+DOCKER_EMAIL="myemail@ibm.com"
 
-OPENSHIFT_URL=$(oc whoami --show-server)
-OPENSHIFT_TOKEN=$(oc whoami -t)
+CP4MCM_NAMESPACE="cp4m"
 
 ###########################
 # Parameters for ROKS
@@ -46,8 +46,9 @@ else
   ROKSZONE=$(oc get ${node} -o yaml | grep "ibm-cloud.kubernetes.io/zone:" | cut -d: -f2 | tr -d '[:space:]')
 fi
 
-oc create secret docker-registry icpa --docker-password=${ENTITLED_REGISTRY_KEY} --docker-username=${ENTITLED_REGISTRY_USER} --docker-email="myuser@ibm.com" --docker-server="cp.icr.io"
-oc secret link cpeir icpa --for=pull
+CP4MCM_BLOCK_STORAGECLASS=${storclass}
+CP4MCM_FILE_STORAGECLASS=${storclass}
+CP4MCM_FILE_GID_STORAGECLASS=${storclass}
 
 running=$(oc get job ${name}-installer -n cpeir --no-headers 2>/dev/null | wc -l)
 
@@ -56,10 +57,11 @@ if [ $running -gt 0 ]; then
   exit 0
 fi
 
-export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_USER
+export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_SECRET DOCKER_EMAIL
+export CP4MCM_NAMESPACE CP4MCM_BLOCK_STORAGECLASS CP4MCM_FILE_STORAGECLASS CP4MCM_FILE_GID_STORAGECLASS
 export ROKS ROKSREGION ROKSZONE
 
-cat << EOF > test.yaml
+cat << EOF | oc create -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -69,28 +71,30 @@ spec:
     spec:
       serviceAccountName: cpeir
       containers:
-      - name: icpa-installer
+      - name: installer
         env:
-        - name: LICENSE
-          value: "accept"
         - name: ENTITLED_REGISTRY_KEY
-          value: "${ENTITLED_REGISTRY_KEY}"
+          value: ${ENTITLED_REGISTRY_KEY}
         - name: ENTITLED_REGISTRY
-          value: "${ENTITLED_REGISTRY}"
-        - name: ENTITLED_REGISTRY_USER
-          value: ${ENTITLED_REGISTRY_USER}
-        - name: OPENSHIFT_URL
-          value: "${OPENSHIFT_URL}"
-        - name: OPENSHIFT_TOKEN
-          value: "${OPENSHIFT_TOKEN}"
+          value: ${ENTITLED_REGISTRY}
+        - name: ENTITLED_REGISTRY_SECRET
+          value: ${ENTITLED_REGISTRY_SECRET}
+        - name: CP4MCM_NAMESPACE
+          value: ${CP4MCM_NAMESPACE}
+        - name: CP4MCM_BLOCK_STORAGECLASS
+          value: ${CP4MCM_BLOCK_STORAGECLASS}
+        - name: CP4MCM_FILE_STORAGECLASS
+          value: ${CP4MCM_FILE_STORAGECLASS}
+        - name: CP4MCM_FILE_GID_STORAGECLASS
+          value: ${CP4MCM_FILE_GID_STORAGECLASS}
         - name: ROKS
           value: "${ROKS}"
         - name: ROKSREGION
           value: "${ROKSREGION}"
         - name: ROKSZONE
           value: "${ROKSZONE}"
-        image: $ENTITLED_REGISTRY/cp/icpa/icpa-installer:$version
-        command: ["main.sh", "install"]
+        image: vbudi/cpeir-runtime:v0.05
+        command: ["bash",  "installjob.sh", ${name}]
       restartPolicy: Never
 EOF
 

@@ -1,0 +1,9 @@
+requirements:
+  default:
+    cpu: 6000m
+    memory: 12Gi
+  minimal:
+    cpu: 6000m
+    memory: 12Gi
+    pv: 20Gi
+    disk: 100Gi

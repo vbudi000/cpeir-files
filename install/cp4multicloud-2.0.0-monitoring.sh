@@ -27,9 +27,8 @@ CP4MCM_NAMESPACE="cp4m"
 ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.image --no-headers | grep "bluemix.net\|icr.io")
 # ibmroks=$(oc cluster-info | grep "cloud.ibm.com" )
 storclass=$(oc get cpeir ${objid} -o custom-columns=sc:spec.storageClass --no-headers)
-storfeatclass=$(oc get cpeir ${objid} -o json | jq -r '.spec.cpfeatures[] | select(.name=="monitoring") | .storageClass')
-
 defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
+storfeatclass=$(oc get cpeir ${objid} -o json | jq -r '.spec.cpfeatures[] | select(.name=="monitoring") | .storageClass')
 
 if [ -z $storfeatclass ]; then
   storfeatclass=$storclass

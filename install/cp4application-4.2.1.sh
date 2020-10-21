@@ -112,7 +112,7 @@ spec:
       volumes:
       - name: cm
         configMap:
-        name: cpainst
+          name: cpainst
       restartPolicy: Never
 EOF
 

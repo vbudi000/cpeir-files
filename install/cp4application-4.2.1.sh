@@ -49,6 +49,7 @@ fi
 oc create secret docker-registry icpa --docker-password=${ENTITLED_REGISTRY_KEY} --docker-username=${ENTITLED_REGISTRY_USER} --docker-email="myuser@ibm.com" --docker-server="cp.icr.io"
 oc secret link cpeir icpa --for=pull
 
+
 running=$(oc get job ${name}-installer -n cpeir --no-headers 2>/dev/null | wc -l)
 
 if [ $running -gt 0 ]; then
@@ -60,10 +61,24 @@ export ENTITLED_REGISTRY_KEY ENTITLED_REGISTRY ENTITLED_REGISTRY_USER
 export ROKS ROKSREGION ROKSZONE
 
 cat << EOF | oc create -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cpainst
+  namespace: cpeir
+data:
+  runinst.sh: |
+    #/bin/bash
+    sed -i 's/get subscription/get subscriptions.operators.coreos.com/g' playbook/roles/common/tasks/check-operator.yaml
+    bash main.sh install
+EOF
+
+cat << EOF | oc create -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: ${name}-installer
+  namespace: cpeir
 spec:
   template:
     spec:
@@ -90,7 +105,14 @@ spec:
         - name: ROKSZONE
           value: "${ROKSZONE}"
         image: $ENTITLED_REGISTRY/cp/icpa/icpa-installer:$version
-        command: ["bash", "main.sh", "install"]
+        command: ["bash", "/cm/runinst.sh"]
+        volumeMounts:
+        - name: cm
+          mountPath: /cm
+      volumes:
+      - name: cm
+        configMap:
+        name: cpainst
       restartPolicy: Never
 EOF
 

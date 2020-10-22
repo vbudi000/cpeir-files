@@ -85,7 +85,7 @@ echo "Step 4 - Waiting for installation to succeed"
 sleep 5
 mcmcsvcnt=0
 until [ $mcmcsvcnt -gt 0 ]; do
-  mcmcsvcnt=$(oc get csv ibm-management-im-install.v2.0.0 -n ${CP4MCM_IM_NAMESPACE} --no-headers | wc -l)
+  mcmcsvcnt=$(oc get csv ibm-management-im-install.v2.1.5 -n ${CP4MCM_IM_NAMESPACE} --no-headers | wc -l)
   sleep 5
 done
 

@@ -70,6 +70,7 @@ data:
   runinst.sh: |
     #/bin/bash
     sed -i 's/get subscription/get subscriptions.operators.coreos.com/g' playbook/roles/common/tasks/check-operator.yaml
+    sed -i "s/storageClassName: \"\"/storageClassName: \"${storclass}\"/g" data/transadv.yaml
     bash main.sh install
 EOF
 

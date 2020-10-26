@@ -29,6 +29,7 @@ ibmroks=$(oc get clusterversion version -o custom-columns=image:status.desired.i
 storclass=$(oc get cpeir ${objid} -o custom-columns=sc:spec.storageClass --no-headers)
 defsc=$(oc get storageclass | grep -v NAME | grep "(default)" | cut -f1 -d" " )
 storfeatclass=$(oc get cpeir ${objid} -o json | jq -r '.spec.cpfeatures[] | select(.name=="monitoring") | .storageClass')
+echo "Storage classes: $storclass - $defsc - $storfeatclass"
 
 if [ -z $storfeatclass ]; then
   storfeatclass=$storclass

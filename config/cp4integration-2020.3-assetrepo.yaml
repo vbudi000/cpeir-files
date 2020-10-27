@@ -1,0 +1,6 @@
+requirements:
+  default:
+    cpu: 700m
+    memory: 1Gi
+    pv: 3Gi
+    disk: 0

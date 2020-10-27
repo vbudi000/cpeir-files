@@ -1,0 +1,6 @@
+requirements:
+  default:
+    cpu: 7.5
+    memory: 14Gi
+    pv: 16Gi
+    disk: 0

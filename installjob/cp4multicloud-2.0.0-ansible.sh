@@ -19,13 +19,14 @@ echo "${now} - MCM core is installed "
 
 # Setting up ansible
 
-cat "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
 apt update
 apt install -y ansible
 
 # Additional packages can be found here:
-ANSIBLE_SETUP_PACKAGE="ansible-tower-openshift-setup-3.7.2-1.tar.gz"
+ANSIBLE_PACKAGE="ansible-tower-openshift-setup-3.7.2-1"
+ANSIBLE_SETUP_PACKAGE="${ANSIBLE_PACKAGE}.tar.gz"
 ANSIBLE_NAMESPACE="management-ansible-tower"
 ANSIBLE_PASSWORD="Passw0rd"
 
@@ -104,7 +105,7 @@ echo "  RABBITERLANGAPWD=$RABBITERLANGAPWD"
 #
 export ANSIBLE_NOCOWS=1
 echo "Executing the Ansible Tower installer:"
-./tmp/ansible-tower-openshift-setup-3.7.2-1/setup_openshift.sh -e openshift_host=https://$KUBE_API_SERVER_HOST:$KUBE_API_SERVER_PORT -e openshift_project=$ANSIBLE_NAMESPACE -e openshift_user=$OPENSHIFT_USER \
+./tmp/${ANSIBLE_PACKAGE}/setup_openshift.sh -e openshift_host=https://$KUBE_API_SERVER_HOST:$KUBE_API_SERVER_PORT -e openshift_project=$ANSIBLE_NAMESPACE -e openshift_user=$OPENSHIFT_USER \
 -e openshift_token=$OPENSHIFT_TOKEN -e admin_password=$OPENSHIFT_TOKEN -e secret_key=$MY_SECRET -e pg_username=$PG_USERNAME -e pg_password=$PG_PASSWORD \
 -e rabbitmq_password=$RABBITMQ_PASSWORD -e rabbitmq_erlang_cookie=$RABBITERLANGAPWD
 

@@ -1,0 +1,6 @@
+requirements:
+  default:
+    cpu: 8200m
+    memory: 8.2Gi
+    pv: 1.5Gi
+    disk: 0

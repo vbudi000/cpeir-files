@@ -242,6 +242,13 @@ until [ $cscsvcnt -le 0 ]; do
 
 done
 
+mcmsvc=$(oc get csv -n kube-system | grep ibm-management-hybridapp | wc -l)
+until [ "$mcmsvc" -eq 1 ]; do
+  sleep 30
+  echo "Waiting for ibm-management-hybridapp CSV"
+  mcmsvc=$(oc get csv -n kube-system | grep ibm-management-hybridapp | wc -l)
+done
+
 mcmcsvcnt=$(oc get csv -n kube-system --no-headers | grep -v "Succeeded" | wc -l)
 now=$(date)
 echo "${now} - Checking mcm operators step ${counter} of 80 - Remaining CSV: ${mcmcsvcnt}"

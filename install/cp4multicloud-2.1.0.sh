@@ -92,7 +92,7 @@ spec:
           value: "${ROKSREGION}"
         - name: ROKSZONE
           value: "${ROKSZONE}"
-        image: vbudi/cpeir-runtime:v0.05
+        image: ibmgaragetsa/cpeir-runtime:v0.001
         command: ["bash",  "installjob.sh", ${name}]
       restartPolicy: Never
 EOF

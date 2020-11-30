@@ -24,13 +24,20 @@ How to use this repo in standalone mode:
 	docker push <imagename>
 	```
 
+- Create the cloudpak sample object(s) modify the storage class as needed:
+
+	```
+	oc create -f cp4apps.yaml -n cpeir
+	oc create -f cp4mcm.yaml -n cpeir
+	```
+
 - Run the cloud pak installation programs:
 
 	Installation programs are in install sub-directory; you invoke it using the following:
 
 	```
 	cd install
-	bash ./<cpname>-<cpversion>.sh
+	bash ./<cpname>-<cpversion>.sh <cpeirObjectName>
 	```
 
 	All the files are called `<cpname>-<cpversion>` or `<cpname>-<cpversion>-<cpfeature>`; remember to modify the job image name with the image name that you created in the previous command.

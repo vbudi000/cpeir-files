@@ -1,18 +1,8 @@
 #!/bin/bash
 
-OBJID=$1
-CPARG=$2
+oc new-project cpeir
+oc create serviceaccount cpeir -n cpeir
+oc adm policy add-cluster-role-to-user -z cpeir -n cpeir
 
+oc create -f cloud.ibm.com_cpeirs_crd.yaml
 
-res=""
-if [ -f /install/${CPARG}.sh ]; then
-  res=$(/bin/bash /install/${CPARG}.sh ${OBJID})
-fi
-
-if [ -z "$res" ]; then
-  res="{}"
-fi
-
-echo ${res}
-
-exit 0

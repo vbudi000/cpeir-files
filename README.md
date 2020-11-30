@@ -16,7 +16,7 @@ How to use this repo in standalone mode:
 	- This script creates a serviceaccount called cpeir
 	- This script gaves cluster-admin to cpeir (can be removed later - not needed after installation)
 
-- Preparing the runtime image for some of the installation jobs:
+- Preparing the runtime image for some of the installation jobs (or you can use `ibmgaragetsa/cpeir-runtime:v0.001`):
 
 	```
 	cd runtime
@@ -33,7 +33,7 @@ How to use this repo in standalone mode:
 	bash ./<cpname>-<cpversion>.sh
 	```
 
-	All the files are called <cpname>-<cpversion> or <cpname>-<cpversion>-<cpfeature>; remember to modify the job image name with the image name that you created in the previous command.
+	All the files are called `<cpname>-<cpversion>` or `<cpname>-<cpversion>-<cpfeature>`; remember to modify the job image name with the image name that you created in the previous command.
 
 - Possibly clean up the cluster admin for cpeir serviceaccount
 

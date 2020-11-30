@@ -1,0 +1,11 @@
+apiVersion: cloud.ibm.com/v1alpha1
+kind: CPeir
+metadata:
+  name: cp4application
+spec:
+  cptype: "cp4application"
+  cpversion: "4.2.1"
+  cpsizetype: "default"
+  storageClass: "ocs-storagecluster-ceph-rbd"
+  cpfeatures: []
+  action: "Check"

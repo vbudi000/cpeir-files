@@ -95,7 +95,7 @@ EOF
 
 sleep 5
 
-installPlan=$(oc get subscription -n openshift-operators ibm-management-orchestrator -o custom-columns=plan:status.installPlanRef.name --no-headers)
+installPlan=$(oc get subscriptions.operators.coreos.com -n openshift-operators ibm-management-orchestrator -o custom-columns=plan:status.installPlanRef.name --no-headers)
 
 sleep 5
 

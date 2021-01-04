@@ -107,7 +107,7 @@ until [ $planObjects -eq 0 ]; do
      exit 999
   fi
   sleep 20
-  planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep -v "Created\|True" | wc -l)
+  planObjects=$(oc get installplan -n openshift-operators ${installPlan} -o yaml | grep -v "\"" | grep "  status:" | grep -v "Created\|True\|Present" | wc -l)
   now=$(date)
   echo "${now} - Processing installplan ${installPlan} step ${counter} of 30 - objects to be created ${planObjects}"
 done

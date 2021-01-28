@@ -1,0 +1,5 @@
+requirements:
+  default:
+    cpu: 10
+    memory: 20Gi
+    pv: 3Gi

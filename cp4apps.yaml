@@ -4,8 +4,8 @@ metadata:
   name: cp4application
 spec:
   cptype: "cp4application"
-  cpversion: "4.2.1"
+  cpversion: "4.3.0"
   cpsizetype: "default"
-  storageClass: "ocs-storagecluster-ceph-rbd"
+  storageClass: "ocs-storagecluster-cephfs"
   cpfeatures: []
   action: "Check"

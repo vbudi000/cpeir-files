@@ -40,6 +40,7 @@ fi
 
 STORAGECLASS=${storclass}
 APPDOMAIN=$(oc get ingresscontrollers.operator.openshift.io -n openshift-ingress-operator default -o jsonpath='{.status.domain}')
+APPDOMAIN="console-openshift-console.$APPDOMAIN"
 
 running=$(oc get job ${name}-installer -n cpeir --no-headers 2>/dev/null | wc -l)
 

@@ -1,0 +1,7 @@
+requirements:
+  default:
+    cpu: 32
+    memory: 128Gi
+  development:
+    cpu: 16
+    memory: 32Gi

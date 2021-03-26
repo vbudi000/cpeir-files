@@ -80,7 +80,7 @@ spec:
           value: "${ROKSZONE}"
         - name: NAMESPACE
           value: ${NAMESPACE}
-        image: ibmgaragetsa/cpeir-job/v0.001
+        image: ibmgaragetsa/cpeir-job:v0.001
         command: ["bash",  "installjob.sh", ${name}]
       restartPolicy: Never
 EOF

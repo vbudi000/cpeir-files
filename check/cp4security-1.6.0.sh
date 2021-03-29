@@ -4,9 +4,10 @@ filename=$(basename $0)
 name="${filename%.*}"
 version=$(echo ${name} | cut -d- -f2)
 
-mcmcsvphase=$(oc get csv ibm-management-hybridapp.v2.1.5 -n kube-system --no-headers -o custom-columns=mcm:status.phase 2>/dev/null)
+sec1=$(helm list -n cp4security | wc -l)
+sec2=$(helm list -n cp4security | grep -v deployed | wc -l)
 
-if [ "$mcmcsvphase" = "Succeeded" ]; then
+if [ "$sec1" -eq "5" -a "$sec2" -eq "1" ]; then
   inst="true"
 else
   inst="false"
